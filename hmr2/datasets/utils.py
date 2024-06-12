@@ -524,141 +524,141 @@ def smpl_param_processing(smpl_params: Dict, has_smpl_params: Dict, rot: float, 
 
 
 
-def get_example(img_path: str|np.ndarray, center_x: float, center_y: float,
-                width: float, height: float,
-                keypoints_2d: np.array, keypoints_3d: np.array,
-                smpl_params: Dict, has_smpl_params: Dict,
-                flip_kp_permutation: List[int],
-                patch_width: int, patch_height: int,
-                mean: np.array, std: np.array,
-                do_augment: bool, augm_config: CfgNode,
-                is_bgr: bool = True,
-                use_skimage_antialias: bool = False,
-                border_mode: int = cv2.BORDER_CONSTANT,
-                return_trans: bool = False) -> Tuple:
-    """
-    Get an example from the dataset and (possibly) apply random augmentations.
-    Args:
-        img_path (str): Image filename
-        center_x (float): Bounding box center x coordinate in the original image.
-        center_y (float): Bounding box center y coordinate in the original image.
-        width (float): Bounding box width.
-        height (float): Bounding box height.
-        keypoints_2d (np.array): Array with shape (N,3) containing the 2D keypoints in the original image coordinates.
-        keypoints_3d (np.array): Array with shape (N,4) containing the 3D keypoints.
-        smpl_params (Dict): SMPL parameter annotations.
-        has_smpl_params (Dict): Whether SMPL annotations are valid.
-        flip_kp_permutation (List): Permutation to apply to the keypoints after flipping.
-        patch_width (float): Output box width.
-        patch_height (float): Output box height.
-        mean (np.array): Array of shape (3,) containing the mean for normalizing the input image.
-        std (np.array): Array of shape (3,) containing the std for normalizing the input image.
-        do_augment (bool): Whether to apply data augmentation or not.
-        aug_config (CfgNode): Config containing augmentation parameters.
-    Returns:
-        return img_patch, keypoints_2d, keypoints_3d, smpl_params, has_smpl_params, img_size
-        img_patch (np.array): Cropped image patch of shape (3, patch_height, patch_height)
-        keypoints_2d (np.array): Array with shape (N,3) containing the transformed 2D keypoints.
-        keypoints_3d (np.array): Array with shape (N,4) containing the transformed 3D keypoints.
-        smpl_params (Dict): Transformed SMPL parameters.
-        has_smpl_params (Dict): Valid flag for transformed SMPL parameters.
-        img_size (np.array): Image size of the original image.
-        """
-    if isinstance(img_path, str):
-        # 1. load image
-        cvimg = cv2.imread(img_path, cv2.IMREAD_COLOR | cv2.IMREAD_IGNORE_ORIENTATION)
-        if not isinstance(cvimg, np.ndarray):
-            raise IOError("Fail to read %s" % img_path)
-    elif isinstance(img_path, np.ndarray):
-        cvimg = img_path
-    else:
-        raise TypeError('img_path must be either a string or a numpy array')
-    img_height, img_width, img_channels = cvimg.shape
+# def get_example(img_path: str|np.ndarray, center_x: float, center_y: float,
+#                 width: float, height: float,
+#                 keypoints_2d: np.array, keypoints_3d: np.array,
+#                 smpl_params: Dict, has_smpl_params: Dict,
+#                 flip_kp_permutation: List[int],
+#                 patch_width: int, patch_height: int,
+#                 mean: np.array, std: np.array,
+#                 do_augment: bool, augm_config: CfgNode,
+#                 is_bgr: bool = True,
+#                 use_skimage_antialias: bool = False,
+#                 border_mode: int = cv2.BORDER_CONSTANT,
+#                 return_trans: bool = False) -> Tuple:
+#     """
+#     Get an example from the dataset and (possibly) apply random augmentations.
+#     Args:
+#         img_path (str): Image filename
+#         center_x (float): Bounding box center x coordinate in the original image.
+#         center_y (float): Bounding box center y coordinate in the original image.
+#         width (float): Bounding box width.
+#         height (float): Bounding box height.
+#         keypoints_2d (np.array): Array with shape (N,3) containing the 2D keypoints in the original image coordinates.
+#         keypoints_3d (np.array): Array with shape (N,4) containing the 3D keypoints.
+#         smpl_params (Dict): SMPL parameter annotations.
+#         has_smpl_params (Dict): Whether SMPL annotations are valid.
+#         flip_kp_permutation (List): Permutation to apply to the keypoints after flipping.
+#         patch_width (float): Output box width.
+#         patch_height (float): Output box height.
+#         mean (np.array): Array of shape (3,) containing the mean for normalizing the input image.
+#         std (np.array): Array of shape (3,) containing the std for normalizing the input image.
+#         do_augment (bool): Whether to apply data augmentation or not.
+#         aug_config (CfgNode): Config containing augmentation parameters.
+#     Returns:
+#         return img_patch, keypoints_2d, keypoints_3d, smpl_params, has_smpl_params, img_size
+#         img_patch (np.array): Cropped image patch of shape (3, patch_height, patch_height)
+#         keypoints_2d (np.array): Array with shape (N,3) containing the transformed 2D keypoints.
+#         keypoints_3d (np.array): Array with shape (N,4) containing the transformed 3D keypoints.
+#         smpl_params (Dict): Transformed SMPL parameters.
+#         has_smpl_params (Dict): Valid flag for transformed SMPL parameters.
+#         img_size (np.array): Image size of the original image.
+#         """
+#     if isinstance(img_path, str):
+#         # 1. load image
+#         cvimg = cv2.imread(img_path, cv2.IMREAD_COLOR | cv2.IMREAD_IGNORE_ORIENTATION)
+#         if not isinstance(cvimg, np.ndarray):
+#             raise IOError("Fail to read %s" % img_path)
+#     elif isinstance(img_path, np.ndarray):
+#         cvimg = img_path
+#     else:
+#         raise TypeError('img_path must be either a string or a numpy array')
+#     img_height, img_width, img_channels = cvimg.shape
 
-    img_size = np.array([img_height, img_width])
+#     img_size = np.array([img_height, img_width])
 
-    # 2. get augmentation params
-    if do_augment:
-        scale, rot, do_flip, do_extreme_crop, extreme_crop_lvl, color_scale, tx, ty = do_augmentation(augm_config)
-    else:
-        scale, rot, do_flip, do_extreme_crop, extreme_crop_lvl, color_scale, tx, ty = 1.0, 0, False, False, 0, [1.0, 1.0, 1.0], 0., 0.
+#     # 2. get augmentation params
+#     if do_augment:
+#         scale, rot, do_flip, do_extreme_crop, extreme_crop_lvl, color_scale, tx, ty = do_augmentation(augm_config)
+#     else:
+#         scale, rot, do_flip, do_extreme_crop, extreme_crop_lvl, color_scale, tx, ty = 1.0, 0, False, False, 0, [1.0, 1.0, 1.0], 0., 0.
 
-    if width < 1 or height < 1:
-        breakpoint()
+#     if width < 1 or height < 1:
+#         breakpoint()
 
-    if do_extreme_crop:
-        if extreme_crop_lvl == 0:
-            center_x1, center_y1, width1, height1 = extreme_cropping(center_x, center_y, width, height, keypoints_2d)
-        elif extreme_crop_lvl == 1:
-            center_x1, center_y1, width1, height1 = extreme_cropping_aggressive(center_x, center_y, width, height, keypoints_2d)
+#     if do_extreme_crop:
+#         if extreme_crop_lvl == 0:
+#             center_x1, center_y1, width1, height1 = extreme_cropping(center_x, center_y, width, height, keypoints_2d)
+#         elif extreme_crop_lvl == 1:
+#             center_x1, center_y1, width1, height1 = extreme_cropping_aggressive(center_x, center_y, width, height, keypoints_2d)
 
-        THRESH = 4
-        if width1 < THRESH or height1 < THRESH:
-            # print(f'{do_extreme_crop=}')
-            # print(f'width: {width}, height: {height}')
-            # print(f'width1: {width1}, height1: {height1}')
-            # print(f'center_x: {center_x}, center_y: {center_y}')
-            # print(f'center_x1: {center_x1}, center_y1: {center_y1}')
-            # print(f'keypoints_2d: {keypoints_2d}')
-            # print(f'\n\n', flush=True)
-            # breakpoint()
-            pass
-            # print(f'skip ==> width1: {width1}, height1: {height1}, width: {width}, height: {height}')
-        else:
-            center_x, center_y, width, height = center_x1, center_y1, width1, height1
+#         THRESH = 4
+#         if width1 < THRESH or height1 < THRESH:
+#             # print(f'{do_extreme_crop=}')
+#             # print(f'width: {width}, height: {height}')
+#             # print(f'width1: {width1}, height1: {height1}')
+#             # print(f'center_x: {center_x}, center_y: {center_y}')
+#             # print(f'center_x1: {center_x1}, center_y1: {center_y1}')
+#             # print(f'keypoints_2d: {keypoints_2d}')
+#             # print(f'\n\n', flush=True)
+#             # breakpoint()
+#             pass
+#             # print(f'skip ==> width1: {width1}, height1: {height1}, width: {width}, height: {height}')
+#         else:
+#             center_x, center_y, width, height = center_x1, center_y1, width1, height1
 
-    center_x += width * tx
-    center_y += height * ty
+#     center_x += width * tx
+#     center_y += height * ty
 
-    # Process 3D keypoints
-    keypoints_3d = keypoint_3d_processing(keypoints_3d, flip_kp_permutation, rot, do_flip)
+#     # Process 3D keypoints
+#     keypoints_3d = keypoint_3d_processing(keypoints_3d, flip_kp_permutation, rot, do_flip)
 
-    # 3. generate image patch
-    if use_skimage_antialias:
-        # Blur image to avoid aliasing artifacts
-        downsampling_factor = (patch_width / (width*scale))
-        if downsampling_factor > 1.1:
-            cvimg  = gaussian(cvimg, sigma=(downsampling_factor-1)/2, channel_axis=2, preserve_range=True, truncate=3.0)
+#     # 3. generate image patch
+#     if use_skimage_antialias:
+#         # Blur image to avoid aliasing artifacts
+#         downsampling_factor = (patch_width / (width*scale))
+#         if downsampling_factor > 1.1:
+#             cvimg  = gaussian(cvimg, sigma=(downsampling_factor-1)/2, channel_axis=2, preserve_range=True, truncate=3.0)
 
-    img_patch_cv, trans = generate_image_patch_cv2(cvimg,
-                                                    center_x, center_y,
-                                                    width, height,
-                                                    patch_width, patch_height,
-                                                    do_flip, scale, rot, 
-                                                    border_mode=border_mode)
-        # img_patch_cv, trans = generate_image_patch_skimage(cvimg,
-        #                                                 center_x, center_y,
-        #                                                 width, height,
-        #                                                 patch_width, patch_height,
-        #                                                 do_flip, scale, rot, 
-        #                                                 border_mode=border_mode)
+#     img_patch_cv, trans = generate_image_patch_cv2(cvimg,
+#                                                     center_x, center_y,
+#                                                     width, height,
+#                                                     patch_width, patch_height,
+#                                                     do_flip, scale, rot, 
+#                                                     border_mode=border_mode)
+#         # img_patch_cv, trans = generate_image_patch_skimage(cvimg,
+#         #                                                 center_x, center_y,
+#         #                                                 width, height,
+#         #                                                 patch_width, patch_height,
+#         #                                                 do_flip, scale, rot, 
+#         #                                                 border_mode=border_mode)
 
-    image = img_patch_cv.copy()
-    if is_bgr:
-        image = image[:, :, ::-1]
-    img_patch_cv = image.copy()
-    img_patch = convert_cvimg_to_tensor(image)
-
-
-    smpl_params, has_smpl_params = smpl_param_processing(smpl_params, has_smpl_params, rot, do_flip)
-
-    # apply normalization
-    for n_c in range(min(img_channels, 3)):
-        img_patch[n_c, :, :] = np.clip(img_patch[n_c, :, :] * color_scale[n_c], 0, 255)
-        if mean is not None and std is not None:
-            img_patch[n_c, :, :] = (img_patch[n_c, :, :] - mean[n_c]) / std[n_c]
-    if do_flip:
-        keypoints_2d = fliplr_keypoints(keypoints_2d, img_width, flip_kp_permutation)
+#     image = img_patch_cv.copy()
+#     if is_bgr:
+#         image = image[:, :, ::-1]
+#     img_patch_cv = image.copy()
+#     img_patch = convert_cvimg_to_tensor(image)
 
 
-    for n_jt in range(len(keypoints_2d)):
-        keypoints_2d[n_jt, 0:2] = trans_point2d(keypoints_2d[n_jt, 0:2], trans)
-    keypoints_2d[:, :-1] = keypoints_2d[:, :-1] / patch_width - 0.5
+#     smpl_params, has_smpl_params = smpl_param_processing(smpl_params, has_smpl_params, rot, do_flip)
 
-    if not return_trans:
-        return img_patch, keypoints_2d, keypoints_3d, smpl_params, has_smpl_params, img_size
-    else:
-        return img_patch, keypoints_2d, keypoints_3d, smpl_params, has_smpl_params, img_size, trans
+#     # apply normalization
+#     for n_c in range(min(img_channels, 3)):
+#         img_patch[n_c, :, :] = np.clip(img_patch[n_c, :, :] * color_scale[n_c], 0, 255)
+#         if mean is not None and std is not None:
+#             img_patch[n_c, :, :] = (img_patch[n_c, :, :] - mean[n_c]) / std[n_c]
+#     if do_flip:
+#         keypoints_2d = fliplr_keypoints(keypoints_2d, img_width, flip_kp_permutation)
+
+
+#     for n_jt in range(len(keypoints_2d)):
+#         keypoints_2d[n_jt, 0:2] = trans_point2d(keypoints_2d[n_jt, 0:2], trans)
+#     keypoints_2d[:, :-1] = keypoints_2d[:, :-1] / patch_width - 0.5
+
+#     if not return_trans:
+#         return img_patch, keypoints_2d, keypoints_3d, smpl_params, has_smpl_params, img_size
+#     else:
+#         return img_patch, keypoints_2d, keypoints_3d, smpl_params, has_smpl_params, img_size, trans
 
 def crop_to_hips(center_x: float, center_y: float, width: float, height: float, keypoints_2d: np.array) -> Tuple:
     """

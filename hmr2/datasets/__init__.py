@@ -5,10 +5,10 @@ import numpy as np
 import pytorch_lightning as pl
 from yacs.config import CfgNode
 
-import webdataset as wds
+# import webdataset as wds
 from ..configs import to_lower
 from .dataset import Dataset
-from .image_dataset import ImageDataset
+# from .image_dataset import ImageDataset
 from .mocap_dataset import MoCapDataset
 
 def create_dataset(cfg: CfgNode, dataset_cfg: CfgNode, train: bool = True, **kwargs) -> Dataset:
@@ -31,14 +31,14 @@ def create_webdataset(cfg: CfgNode, dataset_cfg: CfgNode, train: bool = True) ->
     return dataset_type.load_tars_as_webdataset(cfg, **to_lower(dataset_cfg), train=train)
 
 
-class MixedWebDataset(wds.WebDataset):
-    def __init__(self, cfg: CfgNode, dataset_cfg: CfgNode, train: bool = True) -> None:
-        super(wds.WebDataset, self).__init__()
-        dataset_list = cfg.DATASETS.TRAIN if train else cfg.DATASETS.VAL
-        datasets = [create_webdataset(cfg, dataset_cfg[dataset], train=train) for dataset, v in dataset_list.items()]
-        weights = np.array([v.WEIGHT for dataset, v in dataset_list.items()])
-        weights = weights / weights.sum()  # normalize
-        self.append(wds.RandomMix(datasets, weights))
+# class MixedWebDataset(wds.WebDataset):
+#     def __init__(self, cfg: CfgNode, dataset_cfg: CfgNode, train: bool = True) -> None:
+#         super(wds.WebDataset, self).__init__()
+#         dataset_list = cfg.DATASETS.TRAIN if train else cfg.DATASETS.VAL
+#         datasets = [create_webdataset(cfg, dataset_cfg[dataset], train=train) for dataset, v in dataset_list.items()]
+#         weights = np.array([v.WEIGHT for dataset, v in dataset_list.items()])
+#         weights = weights / weights.sum()  # normalize
+#         self.append(wds.RandomMix(datasets, weights))
 
 class HMR2DataModule(pl.LightningDataModule):
 

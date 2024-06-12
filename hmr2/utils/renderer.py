@@ -241,7 +241,7 @@ class Renderer:
         #     alphaMode='OPAQUE',
         #     baseColorFactor=(*mesh_base_color, 1.0))
         vertex_colors = np.array([(*mesh_base_color, 1.0)] * vertices.shape[0])
-        print(vertices.shape, camera_translation.shape)
+        # print(vertices.shape, camera_translation.shape)
         mesh = trimesh.Trimesh(vertices.copy() + camera_translation, self.faces.copy(), vertex_colors=vertex_colors)
         # mesh = trimesh.Trimesh(vertices.copy(), self.faces.copy())
         
@@ -334,33 +334,35 @@ class Renderer:
 
         mesh_list = [pyrender.Mesh.from_trimesh(self.vertices_to_trimesh(vvv, ttt.copy(), mesh_base_color, rot_axis, rot_angle)) for vvv,ttt in zip(vertices, cam_t)]
 
-        scene = pyrender.Scene(bg_color=[*scene_bg_color, 0.0],
-                               ambient_light=(0.3, 0.3, 0.3))
+        colors = []
         for i,mesh in enumerate(mesh_list):
+            scene = pyrender.Scene(bg_color=[*scene_bg_color, 0.0],
+                               ambient_light=(0.3, 0.3, 0.3))
             scene.add(mesh, f'mesh_{i}')
 
-        camera_pose = np.eye(4)
-        # camera_pose[:3, 3] = camera_translation
-        camera_center = [render_res[0] / 2., render_res[1] / 2.]
-        focal_length = focal_length if focal_length is not None else self.focal_length
-        camera = pyrender.IntrinsicsCamera(fx=focal_length, fy=focal_length,
-                                           cx=camera_center[0], cy=camera_center[1], zfar=1e12)
+            camera_pose = np.eye(4)
+            # camera_pose[:3, 3] = camera_translation
+            camera_center = [render_res[0] / 2., render_res[1] / 2.]
+            focal_length = focal_length if focal_length is not None else self.focal_length
+            camera = pyrender.IntrinsicsCamera(fx=focal_length, fy=focal_length,
+                                            cx=camera_center[0], cy=camera_center[1], zfar=1e12)
 
-        # Create camera node and add it to pyRender scene
-        camera_node = pyrender.Node(camera=camera, matrix=camera_pose)
-        scene.add_node(camera_node)
-        self.add_point_lighting(scene, camera_node)
-        self.add_lighting(scene, camera_node)
+            # Create camera node and add it to pyRender scene
+            camera_node = pyrender.Node(camera=camera, matrix=camera_pose)
+            scene.add_node(camera_node)
+            self.add_point_lighting(scene, camera_node)
+            self.add_lighting(scene, camera_node)
 
-        light_nodes = create_raymond_lights()
-        for node in light_nodes:
-            scene.add_node(node)
+            light_nodes = create_raymond_lights()
+            for node in light_nodes:
+                scene.add_node(node)
 
-        color, rend_depth = renderer.render(scene, flags=pyrender.RenderFlags.RGBA)
-        color = color.astype(np.float32) / 255.0
+            color, rend_depth = renderer.render(scene, flags=pyrender.RenderFlags.RGBA)
+            color = color.astype(np.float32) / 255.0
+            colors.append(color)
         renderer.delete()
 
-        return color
+        return colors
 
     def add_lighting(self, scene, cam_node, color=np.ones(3), intensity=1.0):
         # from phalp.visualize.py_renderer import get_light_poses

@@ -6,14 +6,14 @@ from yacs.config import CfgNode
 
 from ..utils import SkeletonRenderer, MeshRenderer
 from ..utils.geometry import aa_to_rotmat, perspective_projection
-from ..utils.pylogger import get_pylogger
+# from ..utils.pylogger import get_pylogger
 from .backbones import create_backbone
 from .heads import build_smpl_head
 from .discriminator import Discriminator
 from .losses import Keypoint3DLoss, Keypoint2DLoss, ParameterLoss
 from . import SMPL
 
-log = get_pylogger(__name__)
+# log = get_pylogger(__name__)
 
 class HMR2(pl.LightningModule):
 
